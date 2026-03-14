@@ -1,0 +1,281 @@
+---
+title: 'ANÁLISE DA TURMA'
+subtitle: 'Sociograma'
+author: 'Autor: Victor Valerio'
+date: 'Última atualização: `r format(Sys.Date(),"%d-%m-%Y")`'
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: 16:9
+---
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+# PACOTES UTILIZADOS: ----
+library(xaringanthemer)
+library(xaringanExtra)
+
+# CONFIGURAÇÃO DA FONTE: ----
+style_mono_light(base_color = '#1c5253',
+                  text_font_size = '30px',
+                  header_h1_font_size = '3rem',
+                  header_h2_font_size = '2rem',
+                  header_h3_font_size = '1.5rem')
+
+# CONFIGURAÇÃO PADRÃO CHUNK: ----
+knitr::opts_chunk$set(echo = F,
+                      results = 'asis', 
+                      warning = F, 
+                      message = F, 
+                      error = F, 
+                      fig.align = 'center', 
+                      out.width = '100%')
+
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# PACOTES NECESSÁRIOS
+library(googlesheets4)
+library(igraph)
+library(magrittr)
+library(tidygraph)
+library(ggplot2)
+
+# IMPORTAÇÃO DOS DADOS
+googlesheets4::gs4_auth(
+  email = 'victor.dmv@unifei.edu.br'
+)
+
+planilha_url <- 'https://docs.google.com/spreadsheets/d/1iOXffJt1LLPGRoodnd30-A4Nsds6RMCNWk-tmpH0GoY/edit?usp=sharing'
+
+sociograma <- googlesheets4::read_sheet(
+  planilha_url
+)
+
+# ORGANIZAÇÃO DOS DADOS
+colnames(sociograma) <- c('carimbo', 'respondente', 'genero', 'politica', 'escolha_1', 'escolha_2')
+
+dados <- sociograma %>%
+  dplyr::select(-carimbo) %>% 
+  tidyr::drop_na()
+
+# TRATAMENTO DOS DADOS
+arestas <- data.frame(
+  from = rep(dados$respondente, each = 2),
+  to   = c(dados$escolha_1, dados$escolha_2),
+  stringsAsFactors = FALSE
+)
+
+g <- graph_from_data_frame(arestas, directed = TRUE, vertices = dados)
+
+layout <- layout_with_fr(g)
+
+clusters <- cluster_edge_betweenness(as.undirected(g))
+
+V(g)$cluster <- clusters$membership
+
+grupos <- split(V(g), V(g)$cluster)
+
+cores_genero <- c(
+  "Feminino" = "#8a1e00",
+  "Masculino" = "#00566e",
+  "Prefiro não dizer" = "#ff8848",
+  "Outro" = "#fff7d6"
+)
+
+cores_politica <- c(
+  "Conservador(a)" = "#00566e",
+  "Progressista" = "#8a1e00",
+  "Prefiro não dizer" = "#ff8848",
+  "Outro" = "#fff7d6"
+)
+
+tg <- as_tbl_graph(g)
+
+```
+
+<div style="text-align: justify">
+## ANÁLISE DE GÊNERO
+----
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=7, fig.height=7, out.width='50%', fig.align='center'}
+genero <- dados %>% 
+  dplyr::select(genero) %>% 
+  table() %>% 
+  as.data.frame() %>% 
+  dplyr::mutate(Freq = round(Freq/sum(Freq), 2)) %>% 
+  dplyr::mutate(genero = forcats::fct_reorder(genero, Freq)) 
+
+genero %>% 
+  ggplot() + 
+  geom_col(aes(y = genero, x = Freq),
+           fill = '#1c5253') + 
+  geom_text(aes(y = genero, x = Freq, 
+                label = scales::percent(Freq,
+                                        decimal.mark = ',',
+                                        accuracy = 0.01)),
+            hjust = -0.1) + 
+  scale_x_continuous(labels = scales::percent_format(decimal.mark = ',',
+                                                     accuracy = 1),
+                     limits = c(0, max(genero$Freq)+0.05)) + 
+  xaringanthemer::theme_xaringan(text_font_size = 15,
+                                 title_font_size = 20) +
+  labs(title = '',
+       x = '',
+       y = '')
+  
+```
+
+---
+<div style="text-align: justify">
+## ANÁLISE DE VISÃO POLÍTICA
+----
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
+politica <- dados %>% 
+  dplyr::select(politica) %>% 
+  table() %>% 
+  as.data.frame() %>% 
+  dplyr::mutate(Freq = round(Freq/sum(Freq), 2)) %>% 
+  dplyr::mutate(politica = forcats::fct_reorder(politica, Freq)) 
+
+politica %>% 
+  ggplot() + 
+  geom_col(aes(y = politica, x = Freq),
+           fill = '#1c5253') + 
+  geom_text(aes(y = politica, x = Freq, 
+                label = scales::percent(Freq,
+                                        decimal.mark = ',',
+                                        accuracy = 0.01)),
+            hjust = -0.1) + 
+  scale_x_continuous(labels = scales::percent_format(decimal.mark = ',',
+                                                     accuracy = 1),
+                     limits = c(0, max(politica$Freq)+0.05)) + 
+  xaringanthemer::theme_xaringan(text_font_size = 15,
+                                 title_font_size = 20) +
+  labs(title = '',
+       x = '',
+       y = '')
+```
+
+---
+<div style="text-align: justify">
+## SOCIOGRAMA
+----
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
+par(bg = "#E8EDED")
+plot(
+  g,
+  layout = layout,
+  vertex.label = NA,
+  vertex.size = 30,
+  vertex.color = "#1c5253",
+  vertex.label.color = "black",
+  vertex.label.cex = 0.8,
+  edge.arrow.size = 0.5
+)
+par(bg = "transparent")
+```
+
+---
+<div style="text-align: justify">
+## AGRUPAMENTO DO SOCIOGRAMA
+----
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
+par(bg = "#E8EDED")
+plot(
+  g,
+  layout = layout,
+  vertex.label = NA,
+  vertex.size = 30,
+  vertex.color = "#1c5253",
+  vertex.label.color = "black",
+  vertex.label.cex = 0.8,
+  edge.arrow.size = 0.5,
+  bg = "#E8EDED",
+  mark.groups = grupos,
+  mark.border = "#7e7caa",       
+  mark.col = NA,            
+)
+par(bg = "transparent")
+```
+
+---
+<div style="text-align: justify">
+## ANÁLISE DOS GRUPOS POR "GÊNERO"
+----
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
+V(g)$color <- cores_genero[V(g)$genero]
+
+par(bg = "#E8EDED")
+plot(
+  g,
+  layout = layout,
+  vertex.label = NA,
+  vertex.size = 30,
+  vertex.label.color = "black",
+  vertex.label.cex = 0.8,
+  edge.arrow.size = 0.5,
+  mark.groups = grupos,
+  mark.border = "#7e7caa",       
+  mark.col = NA,             
+)
+
+legend(
+  "top", 
+  horiz = TRUE,
+  inset = c(0.0, -0.02),
+  legend = names(cores_genero),
+  col = cores_genero,
+  pch = 21,
+  pt.bg = cores_genero,
+  pt.cex = 2,
+  bty = "n"
+)
+par(bg = "transparent")
+```
+
+---
+<div style="text-align: justify">
+## ANÁLISE DOS GRUPOS POR "VISÃO POLÍTICA"
+----
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
+V(g)$color <- cores_politica[V(g)$politica]
+
+par(bg = "#E8EDED")
+plot(
+  g,
+  layout = layout,
+  vertex.label = NA,
+  vertex.size = 30,
+  vertex.label.color = "black",
+  vertex.label.cex = 0.8,
+  edge.arrow.size = 0.5,
+  mark.groups = grupos,
+  mark.border = "#7e7caa",       
+  mark.col = NA,             
+)
+
+legend(
+  "top", 
+  horiz = TRUE,
+  inset = c(0.0, -0.02),
+  legend = names(cores_politica),
+  col = cores_politica,
+  pch = 21,
+  pt.bg = cores_politica,
+  pt.cex = 2,
+  bty = "n"
+)
+par(bg = "transparent")
+```
+
+
