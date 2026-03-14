@@ -169,11 +169,13 @@ politica %>%
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
 par(bg = "#E8EDED")
+
+V(g)$size <- 10
+
 plot(
   g,
   layout = layout,
   vertex.label = NA,
-  vertex.size = 30,
   vertex.color = "#1c5253",
   vertex.label.color = "black",
   vertex.label.cex = 0.8,
@@ -189,11 +191,13 @@ par(bg = "transparent")
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
 par(bg = "#E8EDED")
+
+V(g)$size <- 10
+
 plot(
   g,
   layout = layout,
   vertex.label = NA,
-  vertex.size = 30,
   vertex.color = "#1c5253",
   vertex.label.color = "black",
   vertex.label.cex = 0.8,
@@ -214,12 +218,13 @@ par(bg = "transparent")
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
 V(g)$color <- cores_genero[V(g)$genero]
 
+V(g)$size <- 10
+
 par(bg = "#E8EDED")
 plot(
   g,
   layout = layout,
   vertex.label = NA,
-  vertex.size = 30,
   vertex.label.color = "black",
   vertex.label.cex = 0.8,
   edge.arrow.size = 0.5,
@@ -250,12 +255,13 @@ par(bg = "transparent")
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=8, out.width='50%', fig.align='center'}
 V(g)$color <- cores_politica[V(g)$politica]
 
+V(g)$size <- 10
+
 par(bg = "#E8EDED")
 plot(
   g,
   layout = layout,
   vertex.label = NA,
-  vertex.size = 30,
   vertex.label.color = "black",
   vertex.label.cex = 0.8,
   edge.arrow.size = 0.5,
